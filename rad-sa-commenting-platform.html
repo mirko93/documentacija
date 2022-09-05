@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commenting platform - baza podataka</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <article class="markdown-body">
+        <h1><a id="user-content-rad-sa-commenting-platform-bazom-podataka" class="anchor" aria-hidden="true"
+                href="#rad-sa-commenting-platform-bazom-podataka"><span aria-hidden="true"
+                    class="octicon octicon-link"></span></a>Rad sa Commenting Platform bazom podataka</h1>
+        <p>Database segment projekta implementiran je na PostgreSQL serveru i sastoji se iz dve osnovne komponente:</p>
+        <ol>
+            <li>
+                <strong>tabela</strong>, koje se u bazi nalaze u okviru core sheme i
+            </li>
+            <li>
+                <strong>funkcija</strong>/stored procedura, koje se nalaze u okviru api sheme
+            </li>
+        </ol>
+        <blockquote>
+            <p>Tabele i ostali strukturalni elementi baze <strong>ne menjaju se direktno</strong>, vec pomocu
+                specijalizovanog alata za verzionisanje <a
+                    href="https://developer.ringieraxelspringer.tech/Dreamlab_Liquibase/index.html"
+                    rel="nofollow">Liquibase</a>. Funkcije se verzionisu uobicajeno, pomocu git-a. Deploy obe pomenute
+                komponente radi se pomocu liquibase alata.</p>
+        </blockquote>
+        <h2><a id="user-content-deploy-procedura" class="anchor" aria-hidden="true" href="#deploy-procedura"><span
+                    aria-hidden="true" class="octicon octicon-link"></span></a>Deploy procedura</h2>
+        <p>Liquibase pravi pomocnu tabelu u bazi u koju belezi checksum svake promene koja je izvrsena pomocu tog alata.
+            Sto se tice nacina na koji se promene unose, to se radi pomocu tzv. <strong>changesetova</strong>. U
+            projektu, ovi fajlovi nalaze se u folderu /changelog/changesets. Za sada postoji samo jedan changeset fajl
+            koji uspostavlja stukturu potrebnih tabela.</p>
+        <p>Deploy changesetova radi se na sledeci nacin:</p>
+        <ul>
+            <li>koristi se aws-azure-login alat za dobijanje kredencijala, pri cemu je potrebno izabrati int/prod
+                verziju baze.</li>
+            <li>pravi se env varijabla sa kojom kasnije rade skripte
+                <code>export AWS_PROFILE=commenting-&lt;int/prod&gt;</code>.</li>
+            <li>generisu se login podaci za bazu:
+                <code>rdbs auth-token (id sa cloud panela) za pass za bazu (d8ch444hj4 je int, a prod je dpnfht7g24)</code>.
+            </li>
+            <li>lokalni projekat kopira se na vm.</li>
+            <li>u folderu projekta na vm pokrece se komanda
+                <code>rdbs -s int liquibase &lt;int/prod key&gt; -- liquibase:update</code>. Ukoliko sve prodje kako
+                treba, promene na tabelama su deployovane.</li>
+            <li>za deploy funkcija, potrebno je u istom folderu pokrenuti komandu
+                <code>rdbs -s int rds-deploy &lt;int/prod key&gt; -- ./functions/</code>.</li>
+        </ul>
+        <blockquote>
+            <p>Voditi racuna o ove dve crtice (--). One moraju da budu razdvojene zarezima! To je nacin da se komandi
+                rdbs saopsti da nakon -- vise nista ne tretira kao sopstvene parametre.</p>
+        </blockquote>
+        <p>Ukoliko se ipak dese rucne izmene nad bazom koje se odnose na gore pomenute komponente, liquibase alat vise
+            nece biti u stanju da pomiri dve razlicite istorije. U tim slucajevima moze pomoci brisanje checksuma:</p>
+        <p><code>rdbs -s int liquibase d8ch444hj4 -- liquibase:clearCheckSums</code>.</p>
+        <p>Osim toga, moguce je dropovati i changeset tabelu, iako se to ne preporucuje - narocito u prod okruzenjima:
+            <code>liquibase:dropAll</code>. Gledajte da ne koristite ovu opciju, a ako bas mora onda detaljno proucite
+            na guglu sta bi mogle da budu posledice i konsultujte se sa Goksijem.</p>
+        <h2><a id="user-content-relevantni-linkovi" class="anchor" aria-hidden="true" href="#relevantni-linkovi"><span
+                    aria-hidden="true" class="octicon octicon-link"></span></a>Relevantni linkovi:</h2>
+        <p><a href="https://developer.ringieraxelspringer.tech/Dreamlab_Liquibase/index.html" rel="nofollow">Dreamlab
+                Liquibase</a></p>
+        <p><a href="https://developer.ringieraxelspringer.tech/rdbs_quickstart/index.html" rel="nofollow">RDBS -
+                PostgreSQL Server</a></p>
+        <p><a href="https://developer.ringieraxelspringer.tech/AWS_Developer_Guide/index.html" rel="nofollow">AWS
+                Developer Guide</a></p>
+    </article>
+</body>
+
+</html>
